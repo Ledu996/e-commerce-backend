@@ -4,7 +4,9 @@ const { User, roles } = require('./User');
 const { Order, deliveryTypes, paymentTypes, statuses } = require('./Order');
 const Store = require('./Store');
 const { Address } = require('./Address');
-const { Driver } = require('./Driver');
+const Driver = require('./Driver');
+
+console.log(Driver);
 
 module.exports = {
     Product,

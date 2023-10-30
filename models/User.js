@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-// User = Customer, Admin = Manager
 const roles = ['Customer', 'Admin', 'SuperAdmin', 'Driver'];
 const genders = ['M', 'F'];
 const validEmail = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
+// what is discriminator key in my case for users and it' roles
+const options = {
+    discriminatorKey: 'type', // type
+    timeStamps: {createdAt: 'timestamp', updatedAt: 'false'}, 
+}
 
 // export the address schema to UserSchema
 // address as a separate entity
@@ -40,11 +44,11 @@ const UserSchema = new Schema({
     preferredAddress: { type: Schema.Types.ObjectId, ref: 'address' },
     verificationToken: String,
     isVerified: { type: Boolean, default: false } 
-});
+}, options);
 
 module.exports = {
     User: mongoose.model('User', UserSchema),
     roles,
+    options,
 };
 
-// maybe add preferred address to a Schema
