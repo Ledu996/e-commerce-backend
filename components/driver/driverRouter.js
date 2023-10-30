@@ -23,3 +23,5 @@ router
 .patch('/change-status-order', roleBasedAccessControl('Driver'), changeStatusOfOrder)
 .patch('/update', roleBasedAccessControl('Admin'), updateDriver)
 .delete('/delete', roleBasedAccessControl('Admin'), deleteDriver)
+
+module.exports = router;

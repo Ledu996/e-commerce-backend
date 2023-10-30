@@ -1,5 +1,4 @@
-const Driver = require("../../models/index/Driver");
-const Order = require("../../models/index/Order");
+ const { Driver, Order } = require("../../models/index");
 
 
 
@@ -37,19 +36,22 @@ const getFreeDrivers = async (req, res) => {
 
 const changeStatusToBusy = async (req, res) => {
     // find by id and update
-    await Driver.findOneAndUpdate({})
+    await Driver.findOneAndUpdate({ _id: req.user._id }, { status: 'busy' })
 };
 const changeStatusToFree = async (req, res) => {
     // find by id and update
-    await Driver.findOneAndUpdate({})
+    await Driver.findOneAndUpdate({ _id: req.user._id }, {status: 'free'});
 };
 
 // if driver is logged, he can change status of an order
 
 const changeStatusOfOrder = async (req, res) => {
     // when delivered change status, and increase totalDrives by one
+    console.log(req.user);
+    // order_id is crucial, maybe he changes the directions
+    // match inside driver orders
     await Order.findOneAndUpdate(
-        {status: 'pending', driverId: '' }, 
+        {status: 'pending', driverId: req.user._id }, 
         {status: 'delivered'}
     );
 };
