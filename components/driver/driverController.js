@@ -1,4 +1,4 @@
- const { Driver, Order } = require("../../models/index");
+ const { Driver, Order, User } = require("../../models/index");
 
 
 
@@ -33,14 +33,25 @@ const getFreeDrivers = async (req, res) => {
 
 
 // DRIVER (add new Role)
+// does not inherit the user's properties
+// seems like user document is transformed not the driver
+// OOP works differently
 
 const changeStatusToBusy = async (req, res) => {
+    console.log("Changing status to busy");
     // find by id and update
-    await Driver.findOneAndUpdate({ _id: req.user._id }, { status: 'busy' })
+    const driver = await Driver.find({ _id: req.user.id}); // type: req.user.role
+    console.log('Driver here ', driver);
+    // specify the type
+    await Driver.findOneAndUpdate({ _id: req.user._id }, { status: 'busy' });
+    res.status(200).json({message: 'Changed status to busy'});
 };
 const changeStatusToFree = async (req, res) => {
     // find by id and update
-    await Driver.findOneAndUpdate({ _id: req.user._id }, {status: 'free'});
+    console.log('Changing status to free');
+    console.log(req.user._id);
+    await Driver.findOneAndUpdate({_id: req.user._id }, {status: 'free'});
+    res.status(200).json({message: 'Successfully changed status to free'});
 };
 
 // if driver is logged, he can change status of an order
