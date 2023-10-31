@@ -16,7 +16,6 @@ const {
 
 router
 .post('/-create', [permissionAccess, roleBasedAccessControl('Admin')], createDriver)
-// cannot hit the route right, do not know how to make id value dynamic
 .get('/get-driver/:id', [permissionAccess, roleBasedAccessControl('Admin')], getDriver)
 .get('-free', [ permissionAccess, roleBasedAccessControl('Admin')], getFreeDrivers)
 .patch('/change-status-busy',[permissionAccess, roleBasedAccessControl('Driver')], changeStatusToBusy)
