@@ -1,24 +1,52 @@
- const { Driver, Order, User } = require("../../models/index");
+ const { Driver, Order } = require("../../models/index");
+ const { hash } = require("bcrypt");
 
 
 
 // ADMIN
 
+
 const createDriver = async (req, res) => {
     try {
-        const { name, phone } = req.body;
+        const { username, name, phone, email, password, gender, } = req.body;
+        
+        const hashedPassword = await hash('pass123', 10);
+
         await Driver.create({
+            username: username.trim(),
+            email: email.trim(),
+            password: hashedPassword,
             name,
             phone,
+            gender,
         })
-        res.status(201).json({message: 'Successfully created driver', result: {}})
+        return res.status(201).json({message: 'Successfully created driver', result: {}})
     } catch (err) {
-
+        console.log(err.message);
+        return res.status(500).json({message: 'Failed to create a driver', result: null})
     }
 };
-const getDriver = (req, res) => {
+const getDriver = async (req, res) => {
+    try {
+    console.log('Hit the get driver route');
+    const { id: _id } = req.params;
+    // const {id: _id} = req.query;
+    console.log('Params ', req.params);
+    console.log('Query ', req.query);
     // from a driver info
+    // how to search for a specific driver
+    // can I search trough a user(because it is saved in user collection) or a driver(same to save a document-)
+    // answer: can search trough driver
+    const driver = await Driver.findById({ _id });
+    console.log('Driver ', driver);
+    res.status(200).json({message: 'Successfully found a driver', results: driver});
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({message: err.message, results: null});
+    }
 };
+
+
 const updateDriver = (req, res) => {};
 const deleteDriver = (req, res) => {};
 
@@ -33,24 +61,18 @@ const getFreeDrivers = async (req, res) => {
 
 
 // DRIVER (add new Role)
-// does not inherit the user's properties
-// seems like user document is transformed not the driver
-// OOP works differently
 
 const changeStatusToBusy = async (req, res) => {
-    console.log("Changing status to busy");
     // find by id and update
-    const driver = await Driver.find({ _id: req.user.id}); // type: req.user.role
-    console.log('Driver here ', driver);
     // specify the type
     await Driver.findOneAndUpdate({ _id: req.user._id }, { status: 'busy' });
     res.status(200).json({message: 'Changed status to busy'});
 };
 const changeStatusToFree = async (req, res) => {
     // find by id and update
-    console.log('Changing status to free');
-    console.log(req.user._id);
+
     await Driver.findOneAndUpdate({_id: req.user._id }, {status: 'free'});
+
     res.status(200).json({message: 'Successfully changed status to free'});
 };
 
