@@ -6,7 +6,7 @@ const validEmail = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0
 
 // what is discriminator key in my case for users and it' roles
 const options = {
-    discriminatorKey: 'type', // type
+    discriminatorKey: 'type_of_role', // type
     timeStamps: {createdAt: 'timestamp', updatedAt: 'false'}, 
 }
 
