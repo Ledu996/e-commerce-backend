@@ -35,6 +35,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(async (req, res, next) => {
   try {
   // did not solve a problem because maybe id will be required in whiteListed route
+  // find out how to get id param
   const { originalUrl } = req;
  
  // list the routes that are protected if not, go to permission access
@@ -47,7 +48,7 @@ app.use(async (req, res, next) => {
  */
   const paths = [
     'users/signup',
-    '/users/login'
+    '/users/signIn'
   ]
   // unprotected routes do not have, req user attached to them, but if we use /:id how to exclude it
     console.log('Path', originalUrl); 
@@ -71,8 +72,6 @@ app.use(async (req, res, next) => {
   return res.status(403).json({message: 'User has to be authorized'});
 } 
 })
-
-
 
 
 // Application Routes
