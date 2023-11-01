@@ -37,36 +37,28 @@ app.use(async (req, res, next) => {
   // did not solve a problem because maybe id will be required in whiteListed route
   // find out how to get id param
   const { originalUrl } = req;
- 
- // list the routes that are protected if not, go to permission access
- // reverse the protected paths to, unprotected list
- // this will be a long list here
- /* 
-    unprotected paths
-    /login
-    /signup
- */
+  // unprotected routes 
+  
   const paths = [
-    'users/signup',
-    '/users/signIn'
+    /\/users\/signup/,  // Regular expression to match the string "users/signup"
+    /\/users\/signin/,  // Regular expression to match the string "users/signin"
+    /\/products\/all/, // Regular expression to match the string "products/all"
+    /\/products\/id\/\w+/  // Regular expression to match routes with "id" parameter
   ]
-  // unprotected routes do not have, req user attached to them, but if we use /:id how to exclude it
-    console.log('Path', originalUrl); 
+  
+    const isWhiteListed = paths.some(e => e.test(originalUrl)); // returns true based on condition
     
-    if (!paths.includes(originalUrl)) {
-    
-    console.log('Inside of if statement');
-    const token = req.headers.authorization.split(' ')[1];
-    const verified = await jwt.verify(token, 'secret');
-    console.log('Verified token: ', verified);
-    if (!verified) return res.status(403).json({message: 'User is not authorized'});
-    req.user = { _id: verified._id }
-    console.log('Log request in user', req.user);
-    next()
-  } else {
-    console.log('Not a protected route');
-    next(); // not among protected paths
-  }
+    if (!isWhiteListed) {
+      const token = req.headers.authorization.split(' ')[1];
+      const verified = await jwt.verify(token, 'secret');
+      if (!verified) return res.status(403).json({message: 'User is not authorized'});
+      req.user = { _id: verified._id }
+      console.log('Log request in user', req.user);
+      next()
+    } else {
+      console.log('Not a protected route');
+      next(); // not among protected paths
+    }
 } catch (err) {
   console.log(err);
   return res.status(403).json({message: 'User has to be authorized'});
