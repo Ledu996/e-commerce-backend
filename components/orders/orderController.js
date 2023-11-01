@@ -8,6 +8,9 @@ const {
 const { dateFormatter } = require('../../lib/misc');
 const jwt = require("jsonwebtoken");
 
+
+// CUSTOMER 
+
 const getAddressAndShopsForOrder = async (req, res) => {
     try {
     const token = req.headers.authorization.split(' ')[1];
@@ -35,7 +38,7 @@ const getAddressAndShopsForOrder = async (req, res) => {
 
 
 const createOrder = async (req, res) => {
-  
+ console.log("Request-user", req.user); 
 try {
     
     const { 
@@ -83,7 +86,7 @@ const getOrdersHistoryByUserId = async (req, res) => {
     // only can see accepted and rejected orders
     // in route of the endpoint specify the id 
     const ordersHistory = await Order
-        .find({ user: '64ff01c0966fc1524c8d6efd' })
+        .find({ user: req.user._id })
         .populate({path: 'products.id', model: 'Product'})
     
     //})
@@ -140,15 +143,37 @@ const listPendingOrders = async (req, res) => {
 // driver can change the status of an order
 const acceptAnOrder = async (req, res) => {
     // driver_id in body of request
-    const { order_id } = req.body;
+    const { order_id, driver_id: driver } = req.body;
     const timeOfDelivery = new Date(Date.now() + 1000 * 60 * 30)
     const acceptAnOrder = await Order.findOneAndUpdate(
         { _id: order_id },
-        { timeOfDelivery, status: 'accepted', driver: '65097c9a9114f00cc08e320a' }
+        { timeOfDelivery, status: 'accepted', driver  }
         // driver can change the status of an order to delivered
     )
     console.log(acceptAnOrder);
     
+};
+
+// DRIVER
+
+const getOrdersForDriver = async (req, res) => {
+    // get orders for a specific driver 
+    try {
+        const orders = await Order.find({driver: req.user._id, status: 'Accepted'});
+        
+        if (!orders.length) return res.status(404).json({message: 'Orders not found', results: orders});
+        return res.status(200).json({message: 'Orders for driver are found', results: orders})
+    } catch (err) {
+        return res.status(500).json({message: 'Error on the server', results: null})
+    }
+    
+};
+
+const changeStatusOfOrder = async (req, res) => {
+    await Order.findOneAndUpdate(
+        {_id: orderId},
+        {status: 'delivered'}
+    ).populate({})
 };
 
 
@@ -158,6 +183,8 @@ module.exports = {
     getOrdersHistoryByUserId,
     listPendingOrders,
     acceptAnOrder,
+    changeStatusOfOrder,
+    getOrdersForDriver,
 }
 
 

@@ -11,7 +11,6 @@ const {
     getFreeDrivers, 
     changeStatusToBusy,
     changeStatusToFree,
-    changeStatusOfOrder
 } = require('./driverController');
 
 router
@@ -20,7 +19,6 @@ router
 .get('-free', [ permissionAccess, roleBasedAccessControl('Admin')], getFreeDrivers)
 .patch('/change-status-busy',[permissionAccess, roleBasedAccessControl('Driver')], changeStatusToBusy)
 .patch('/change-status-free', [permissionAccess, roleBasedAccessControl('Driver')], changeStatusToFree)
-.patch('/change-status-order', roleBasedAccessControl('Driver'), changeStatusOfOrder)
 .patch('/update', [permissionAccess, roleBasedAccessControl('Admin')], updateDriver)
 .delete('/delete', [permissionAccess, roleBasedAccessControl('Admin')], deleteDriver)
 

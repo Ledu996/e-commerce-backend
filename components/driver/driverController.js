@@ -1,16 +1,13 @@
  const { Driver, Order } = require("../../models/index");
  const { hash } = require("bcrypt");
 
-
-
 // ADMIN
-
 
 const createDriver = async (req, res) => {
     try {
         const { username, name, phone, email, password, gender, } = req.body;
         
-        const hashedPassword = await hash('pass123', 10);
+        const hashedPassword = await hash(password, 10);
 
         await Driver.create({
             username: username.trim(),
@@ -22,33 +19,53 @@ const createDriver = async (req, res) => {
         })
         return res.status(201).json({message: 'Successfully created driver', result: {}})
     } catch (err) {
-        console.log(err.message);
+        
         return res.status(500).json({message: 'Failed to create a driver', result: null})
     }
 };
 const getDriver = async (req, res) => {
+
     try {
-    console.log('Hit the get driver route');
-    const { id: _id } = req.params;
-    // const {id: _id} = req.query;
-    console.log('Params ', req.params);
-    console.log('Query ', req.query);
-    // from a driver info
-    // how to search for a specific driver
-    // can I search trough a user(because it is saved in user collection) or a driver(same to save a document-)
-    // answer: can search trough driver
-    const driver = await Driver.findById({ _id });
-    console.log('Driver ', driver);
-    res.status(200).json({message: 'Successfully found a driver', results: driver});
-    } catch (err) {
-        console.log(err.message);
+        const { id: _id } = req.params;
+        const driver = await Driver.findById({ _id });
+    
+        res.status(200).json({message: 'Successfully found a driver', results: driver});
+        } catch (err) {
         res.status(500).json({message: err.message, results: null});
     }
 };
 
 
-const updateDriver = (req, res) => {};
-const deleteDriver = (req, res) => {};
+const updateDriver = async (req, res) => {
+    try {
+    const {id: _id} = req.params;
+    const { username, name, phone, email, password  } = req.body;
+    await Driver.findOneAndUpdate(
+        { _id }, 
+        {
+            username, 
+            name, 
+            phone, 
+            email, 
+            password
+        }
+        )
+        return res.status(303).json({message: 'Successfully updated driver', results: {}});
+    } catch (err) {
+        return res.status(500).json({message: err.message, results: null});
+    }
+
+};
+
+const deleteDriver = async (req, res) => {
+    try {
+        const { id: _id } = req.params;
+        await Driver.deleteOne({_id});
+        return res.status(200).json({message: 'Successfully deleted driver', result: {}});
+    } catch (err) {
+        return res.status(500).json({message: 'Failed to delete driver', result: null});
+    }
+};
 
 const getFreeDrivers = async (req, res) => {
     try {
@@ -78,16 +95,10 @@ const changeStatusToFree = async (req, res) => {
 
 // if driver is logged, he can change status of an order
 
-const changeStatusOfOrder = async (req, res) => {
-    // when delivered change status, and increase totalDrives by one
-    console.log(req.user);
-    // order_id is crucial, maybe he changes the directions
-    // match inside driver orders
-    await Order.findOneAndUpdate(
-        {status: 'pending', driverId: req.user._id }, 
-        {status: 'delivered'}
-    );
-};
+
+// as name of the function is saying this should be in order controller
+// but driver can confirm this
+
 
 module.exports = {
     createDriver,
@@ -97,5 +108,4 @@ module.exports = {
     getFreeDrivers,
     changeStatusToBusy,
     changeStatusToFree,
-    changeStatusOfOrder,
 }
