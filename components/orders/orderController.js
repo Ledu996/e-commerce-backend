@@ -3,7 +3,8 @@ const {
         paymentTypes, 
         deliveryTypes, 
         Store, 
-        User 
+        User,
+        Driver,
 } = require('../../models/index');
 const { dateFormatter } = require('../../lib/misc');
 const jwt = require("jsonwebtoken");
@@ -144,6 +145,7 @@ const listPendingOrders = async (req, res) => {
 const acceptAnOrder = async (req, res) => {
     // driver_id in body of request
     const { order_id, driver_id: driver } = req.body;
+    // this feature should be dynamic (timeOfDelivery)
     const timeOfDelivery = new Date(Date.now() + 1000 * 60 * 30)
     const acceptAnOrder = await Order.findOneAndUpdate(
         { _id: order_id },
@@ -170,10 +172,18 @@ const getOrdersForDriver = async (req, res) => {
 };
 
 const changeStatusOfOrder = async (req, res) => {
-    await Order.findOneAndUpdate(
-        {_id: orderId},
-        {status: 'delivered'}
-    ).populate({})
+    try {
+        await Order.findOneAndUpdate(
+        { _id: orderId },
+        { status: 'delivered' }
+    )
+    // maybe in driver component
+    // see it for later
+        await Driver.findOneAndUpdate({_id: req.user._id}, {$inc: {numberOfSuccessfulDrives: 1}})
+        return res.status(200).json({message: 'Successfully updated order status', results: {}})
+    } catch (err) {
+       return res.status(500).json({message: 'Something went wrong ', results : null})
+    }
 };
 
 

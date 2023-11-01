@@ -1,4 +1,4 @@
- const { Driver, Order } = require("../../models/index");
+ const { Driver } = require("../../models/index");
  const { hash } = require("bcrypt");
 
 // ADMIN
@@ -38,7 +38,7 @@ const getDriver = async (req, res) => {
 
 const updateDriver = async (req, res) => {
     try {
-    const {id: _id} = req.params;
+    const { id: _id } = req.params;
     const { username, name, phone, email, password  } = req.body;
     await Driver.findOneAndUpdate(
         { _id }, 
@@ -77,27 +77,17 @@ const getFreeDrivers = async (req, res) => {
 };
 
 
-// DRIVER (add new Role)
+// DRIVER 
 
 const changeStatusToBusy = async (req, res) => {
-    // find by id and update
-    // specify the type
     await Driver.findOneAndUpdate({ _id: req.user._id }, { status: 'busy' });
     res.status(200).json({message: 'Changed status to busy'});
 };
 const changeStatusToFree = async (req, res) => {
-    // find by id and update
-
     await Driver.findOneAndUpdate({_id: req.user._id }, {status: 'free'});
-
     res.status(200).json({message: 'Successfully changed status to free'});
 };
 
-// if driver is logged, he can change status of an order
-
-
-// as name of the function is saying this should be in order controller
-// but driver can confirm this
 
 
 module.exports = {
