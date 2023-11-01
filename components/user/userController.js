@@ -103,7 +103,7 @@ const login = async (req, res) => {
     // create a token 
     // see the strategies after
     const accessToken = await jwt.sign({_id: user._id}, 'secret', {expiresIn: '1h'})
-    return res.status(200).json({message: '', results: { accessToken, state: user.address.state, role: user.role }});
+    return res.status(200).json({message: '', results: { accessToken, state: user.address.state, role: user.type_of_role }}); // type of role
     // compare passwordInput with password, if not matching password throw an error
     // if it is good assign token to a specific user
     
