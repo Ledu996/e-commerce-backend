@@ -5,8 +5,9 @@ const { Order, deliveryTypes, paymentTypes, statuses } = require('./Order');
 const Store = require('./Store');
 const { Address } = require('./Address');
 const Driver = require('./Driver');
+const Customer = require('./Customer');
 
-console.log(Driver);
+// Did not load a file had to use require for a customer
 
 module.exports = {
     Product,
@@ -17,5 +18,6 @@ module.exports = {
     Store,
     Address,
     roles,
-    Driver
+    Driver,
+    Customer,
 }
