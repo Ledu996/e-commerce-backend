@@ -15,7 +15,7 @@ const {
 
 router
 .post('/-create', [permissionAccess, roleBasedAccessControl('Admin')], createDriver)
-.get('/get-driver/:id', [permissionAccess, roleBasedAccessControl('Admin')], getDriver)
+.get('/get-driver/id/:id', [permissionAccess, roleBasedAccessControl('Admin')], getDriver)
 .get('-free', [ permissionAccess, roleBasedAccessControl('Admin')], getFreeDrivers)
 .patch('/change-status-busy',[permissionAccess, roleBasedAccessControl('Driver')], changeStatusToBusy)
 .patch('/change-status-free', [permissionAccess, roleBasedAccessControl('Driver')], changeStatusToFree)
