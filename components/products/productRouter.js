@@ -8,6 +8,7 @@ const { getAllProducts, getTopSoldProducts, calculateSeelingStatistics } = requi
 // here you will have a loot of functionality included 
 router
 .get('/all', getAllProducts)
+.get('/id/:id')
 .get('/top-sold', getTopSoldProducts) // not protected route anymore
 .get('/stats', calculateSeelingStatistics) // for an admin panel
 
