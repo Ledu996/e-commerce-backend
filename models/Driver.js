@@ -14,10 +14,12 @@ const DriverSchema = new Schema({
     car: { type: String, default: 'will be an object_id' }, // we will have cars entity
     manager: { type: Schema.Types.ObjectId, ref: 'users' },
     numberOfSuccessfulDrives: { type: Number, default: 0 },
-    orders: [{ type: Schema.Types.ObjectId, ref: 'orders'}]
+    /*orders: [{ type: Schema.Types.ObjectId, ref: 'orders'}]*/
 }, options); 
 
 // see the discriminator part does it change the whole application
 // users are drivers, customers(users) and admin
+
+console.log('Driver Model ', User);
 
 module.exports = User.discriminator('Driver', DriverSchema); // roles[3]

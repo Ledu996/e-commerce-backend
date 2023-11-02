@@ -4,9 +4,10 @@ const { User } = require('../../models/index');
 
 // CREATE AN API DOCUMENTATION USING SWAGGER THAT IS FOR LATER
 
+// Customer and Driver functionality 
+// Admins are already registered inside of a system
 
-const register = async (req, res) => {
-    
+const register = async (req, res) => {   
     const { 
         firstname,
         lastname,
@@ -16,34 +17,33 @@ const register = async (req, res) => {
         address, 
         phone, 
         gender,
-        dateOfBirth, 
+        dateOfBirth,
+        typeOfUser
     } = req.body;
-    
-    const user = await User.findOne({$or: [{username}, {email}]});
-    if (user) return res.status(400).json({message: 'User already exists', results: null})
-    const hashedPassword = await hash(password, 10);
-    const body = {...req.body, password: hashedPassword}
-    const verificationToken = await jwt.sign({username}, 'secret', {expiresIn: '1m'});
-    // do not forget to reassign verification token
-    const createdUser = await User.create({
-        ...body,
-        verificationToken
-    })
 
+    const user = await User.findOne({$or: [{ username }, { email }] });
+    if (user) return res.status(400).json({message: 'User already exists', results: null})
+    
+    let hashedPassword = await hash(password, 10);
+
+    // validation token for later but it is saved on user document
+
+    // maybe later set a condition if you need to fill other fields that are not related for Driver and Customer
+    const createdUser = await User.create({
+        ...req.body,
+        password: hashedPassword,
+        type_of_role: typeOfUser == 'Customer' ? 'Customer' : 'Driver',
+    })
+    
     const access_token = await jwt.sign({_id: createdUser._id}, 'secret', {expiresIn: '1h'}); // 7d 
-        res.status(200).json({message: "User created successfully", results: {createdUser, access_token}});
-    // then hash a password after that, that user typed
-    // than save the document thank you, and take a rest...
+    res.status(200).json({message: "User created successfully", results: {createdUser, access_token}});
+    }
+    
     // confirm account on the email
-}
+
 
 // see a flow for this and check it out
 
-// check if token verification expired 
-// /GET FOR SOME route
-// this will fire inside email confirmation page, and there we can determine if link is active
-// I know you want to work now do not lose your head
-// save it for later 
 const checkVerificationTokenExpire = async (req, res, next) => {
     // always set security on upper level
     // every time we visit the email confirm page this will run
