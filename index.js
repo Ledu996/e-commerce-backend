@@ -5,7 +5,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); 
 const { connectionString } = require('./config/database/connection');
-const userRouter = require('./components/user/userRoutes');
+const authRouter = require('./components/auth/authRouter');
 const orderRouter = require('./components/orders/orderRouter');
 const productRouter = require('./components/products/productRouter');
 const driverRouter = require('./components/driver/driverRouter');
@@ -29,8 +29,8 @@ app.use(async (req, res, next) => {
 
   // unprotected routes 
   const paths = [
-    /\/users\/signup/,  
-    /\/users\/signin/,  
+    /\/auth\/signup/,  
+    /\/auth\/signin/,  
     /\/products\/all/, 
     /\/products\/id\/\w+/  
   ]
@@ -56,13 +56,13 @@ app.use(async (req, res, next) => {
 
 // Application Routes
 
-app.use('/users', userRouter);
+app.use('/auth', authRouter);
 app.use('/orders', orderRouter);
 app.use('/products', productRouter);
 app.use('/drivers', driverRouter);
 
 
-mongoose.connect('mongodb+srv://dusan_admin2:admin22@baza.avgt5.mongodb.net/product_order');
+  mongoose.connect('mongodb+srv://dusan_admin2:admin22@baza.avgt5.mongodb.net/product_order');
   
   mongoose.connection.on('connected', () => {
     console.log(`Mongoose default connection open to mongoDB.connectionString()`);
