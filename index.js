@@ -3,8 +3,10 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 require('dotenv').config(); 
 const { connectionString } = require('./config/database/connection');
+const { refreshAccessToken } = require('./lib/jwtHandler');
 const authRouter = require('./components/auth/authRouter');
 const orderRouter = require('./components/orders/orderRouter');
 const productRouter = require('./components/products/productRouter');
@@ -15,14 +17,23 @@ console.log( `${__dirname}./environments/development.env`);
 console.log('process env ', process.env.MONGO_DB)
 console.log(connectionString, typeof connectionString);
 
+// To extract cookies from request use a global middleware for it 
+// set some options in cookie, still getting an error 
+// Cookie  [Object: null prototype] {}
 app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+
 
 
 
 
 app.use(async (req, res, next) => {
+
+  // if trying to interact with protected route we use acc_token
+  // if token is expired we use refresh token to generate a new acc_token
   try {
   
   const { originalUrl } = req;
@@ -30,26 +41,29 @@ app.use(async (req, res, next) => {
   // unprotected routes 
   const paths = [
     /\/auth\/signup/,  
-    /\/auth\/signin/,  
+    /\/auth\/signIn/,  
     /\/products\/all/, 
-    /\/products\/id\/\w+/  
-  ]
+    /\/products\/id\/\w+/, 
+    /\/auth\/refresh-token$/, 
+  ];
   
   const isWhiteListed = paths.some(e => e.test(originalUrl)); 
-    
+  console.log('Is whiteListed ', isWhiteListed);
   if (!isWhiteListed) {
-        
     const token = req.headers.authorization.split(' ')[1];
-    const verified = await jwt.verify(token, 'secret');
-        
-    if (!verified) return res.status(403).json({message: 'User is not authorized'});
-        req.user = { _id: verified._id }
-        next()
-      } else {
-          next(); // not among protected paths
-      }
+    const verified = await jwt.verify(token, 'acc_secret');
+    console.log('Access token ', verified);
+    req.user = { _id: verified._id }
+    next()
+  } else {
+    console.log('Not among protected routes');
+    next(); // not among protected paths
+  }
 } catch (err) {
-  return res.status(403).json({message: 'User has to be authorized'});
+  // just return a response not authorized
+  // on client will than hit an endpoint to refresh a token
+  return res.status(401).json({message: 'Token needs to be refreshed', result: {}})
+  
 } 
 })
 
