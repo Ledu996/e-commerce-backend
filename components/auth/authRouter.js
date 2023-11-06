@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { login, register, handleRefreshToken, logout } = require('./authController');
+const { login, register, handleRefreshToken } = require('./authController');
 
 
 
 router
 .post('/signIn', login)
 .post('/signup', register)
-.get('/logout', logout)
 .get('/refresh-token', handleRefreshToken)
 
 

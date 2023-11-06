@@ -4,6 +4,7 @@ const cookie = require('cookie-parser');
 const  jwt = require('jsonwebtoken');
 const { User } = require('../../models/index');
 
+
 const register = async (req, res) => {   
     const { 
         firstname,
@@ -39,7 +40,6 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
     // validation of data that we send here can be done on frontend
-    const cookies = req.cookies;
     const { username, password } = req.body;
     const user = await User.findOne( { username } );
     
@@ -50,41 +50,19 @@ const login = async (req, res) => {
     const isValid = await compare(password, hashedPassword);
     
     if(!isValid) return res.status(401).json({message: 'Wrong credentials'});
-    
-    const { acc_token: accessToken, refresh_token } = await getTokens();
 
-    // generates all pastTokens inside token family array if true
-    let newRefreshTokenArray = 
-      !cookies.jwt 
-        ? user.refreshToken : 
-        user.refreshToken.filter(rt => rt !== cookie.jwt);
-    
-    if(cookie?.jwt)  {
-        const refreshToken = cookies.jwt;
-        // find user with refresh token stored inside of a cookie
-        const foundToken = await User.findOne({ refreshToken });
-    
-        if(!foundToken) { // token reuse
-            newRefreshTokenArray = []
-        }
-        res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
-    }
-
-    user.refreshToken = [...newRefreshTokenArray, refresh_token];
-    await user.save();    
-    
     // this query runs because we need to update the user status on the database
-    // this query can stay for now
     await User.findOneAndUpdate({ username }, { isActive: true }).lean() 
-  
+    const tokens = await getTokens(user);
+    const { acc_token: accessToken, refresh_token } = tokens;
     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000,  });
     return res.status(200).json({message: '', results: { accessToken, state: user.address.state, role: user.type_of_role }});  
 };
 
 
 // 1) refresh token rotation strategy
-// - every time we exchange a refresh token(acc_token has expired), a new refresh token is also generated
-// leveling up the security of our app
+// - every time we exchange a refresh token, a new refresh token is also generated
+  // leveling up the security of our app
 
 // 2) Refresh Token Automatic Reuse Detection
 // unable refresh token family inside of a user document
@@ -110,14 +88,6 @@ const handleRefreshToken = async (req, res) => { // 1)
 
 const logout = async (req, res) => {
     // clear cookie here
-    const { _id } = req.user;
-    const user = await User.findOne({ _id }); 
-    if(!user) {
-        res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
-        return res.status(204).json({message: 'No content', message: null})
-    }
-    res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true });
-    return res.status(204).json({message: 'Successfully loged out', message: null})
 };
 
 
@@ -125,7 +95,6 @@ module.exports = {
     register,
     login,
     handleRefreshToken,
-    logout,
 }
 
 
