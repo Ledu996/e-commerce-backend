@@ -8,7 +8,7 @@ router
 .post('/signIn', login)
 .post('/signup', register)
 .get('/refresh-token', handleRefreshToken)
-app.get('/logout', logout)
+.get('/logout', logout)
 
 
 module.exports = router;
