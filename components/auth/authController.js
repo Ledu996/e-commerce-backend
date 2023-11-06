@@ -1,6 +1,8 @@
-const { User } = require('../../models/index');
 const { hash, compare } = require('bcrypt');
+const { getTokens, refreshAccessToken } = require('../../lib/jwtHandler');
+const cookie = require('cookie-parser');
 const  jwt = require('jsonwebtoken');
+const { User } = require('../../models/index');
 
 
 const register = async (req, res) => {   
@@ -51,13 +53,57 @@ const login = async (req, res) => {
 
     // this query runs because we need to update the user status on the database
     await User.findOneAndUpdate({ username }, { isActive: true }).lean() 
-    const accessToken = await jwt.sign({_id: user._id}, 'secret', {expiresIn: '1h'})
+    const tokens = await getTokens(user);
+    const { acc_token: accessToken, refresh_token } = tokens;
+    res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000,  });
     return res.status(200).json({message: '', results: { accessToken, state: user.address.state, role: user.type_of_role }});  
 };
 
-const logout = async (req, res) => {};
+
+// 1) refresh token rotation strategy
+// - every time we exchange a refresh token, a new refresh token is also generated
+  // leveling up the security of our app
+
+// 2) Refresh Token Automatic Reuse Detection
+// unable refresh token family inside of a user document
+// safe to store in a database ? 
+// threat all users as malicious 
+
+const handleRefreshToken = async (req, res) => { // 1)
+    
+    const cookies = req.cookies;
+    if (!cookies?.jwt) return res.status(403).json({message: 'User has to be authorized'});
+  
+    const refreshToken = cookies.jwt;
+    const verifiedToken = await jwt.verify(refreshToken, 'refresh_secret');
+
+    if(!verifiedToken) return res.status(403).json({message: 'User is not authorized'});
+    // new pair of refresh and access token
+    const { acc_token: newAccessToken, refresh_token } = await refreshAccessToken(refreshToken);
+    res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+    return res.status(200).json({message: 'New access token generated', results: {acc_token: newAccessToken}})
+};
 
 
+
+const logout = async (req, res) => {
+    // clear cookie here
+};
+
+
+module.exports = {
+    register,
+    login,
+    handleRefreshToken,
+}
+
+
+
+
+
+
+
+/*
 const checkVerificationTokenExpire = async (req, res, next) => {
     // always set security on upper level
     // every time we visit the email confirm page this will run
@@ -97,14 +143,8 @@ const confirmRegistration = async (req, res) => { // PATCH
     // this is where we confirm this stuff
     // update isActive to  true 
 }
+*/
 
-
-
-
-module.exports = {
-    register,
-    login,
-}
 
 
 
