@@ -6,10 +6,8 @@ const { User } = require('../../models/index');
 // Admins are already registered inside of a system
 
 
-
-
-
 // see what we will do for this
+// only admin can do this
 const createUser = async (req, res) => {};
 
 
@@ -45,7 +43,7 @@ const deleteUser = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
-    const { id: _id } = req.params;
+    const { _id } = req.user;
     const user = await User.findOne({ _id});
     if (!user) return res.status(404).json({message: 'User not found', results: null});
     return res.status(200).json({message: 'Success', results: user});
