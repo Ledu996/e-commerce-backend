@@ -88,6 +88,14 @@ const handleRefreshToken = async (req, res) => { // 1)
 
 const logout = async (req, res) => {
     // clear cookie here
+    const { _id } = req.user;
+    const user = await User.findOne({ _id }); 
+    if(!user) {
+        res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true })
+        return res.status(204).json({message: 'No content', message: null})
+    }
+    res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true });
+    return res.status(204).json({message: 'Successfully loged out', message: null})
 };
 
 
@@ -95,55 +103,11 @@ module.exports = {
     register,
     login,
     handleRefreshToken,
+    logout
 }
 
 
 
-
-
-
-
-/*
-const checkVerificationTokenExpire = async (req, res, next) => {
-    // always set security on upper level
-    // every time we visit the email confirm page this will run
-    // verify the token
-    // if expired assign the new token with the same time
-    // send a new email address with newly generated token
-    // define some local variables above try so you can access them
-    const token = req.headers.authorization.split(' ')[1];
-    const verified = await jwt.verify(token, 'secret');
-    
-    if(!verified) console.log('User not verified')// return error in here
-    
-    try {
-        const user = await User.findOne({ _id: verified._id });
-        const validationVerification = await jwt.verify(user.verificationToken);
-        // address stays the same for an email
-    } catch (err) {
-        const newValidationToken = await jwt.sign({_id: verified._id}, 'secret', {expiresIn: '24h'});
-        await User.findOneAndUpdate({_id: verified._id}, {validationToken: newValidationToken});
-        // send new email with new link
-        // return response
-        res.status(200).json({
-            message: 'Sent verification email again, please check your email address', 
-            results: []
-    })
-    }
-    // verify this one if expired attach new one, send a new link
-    // we will see the strategies 
-}
-
-const confirmRegistration = async (req, res) => { // PATCH    
-
-    const  { token } = req.params;
-    // find user with the same token, if he exists update his status
-    await User.findOneAndUpdate({ verificationToken: token }, { isVerified: true });
-    res.status(200).json({message: 'Email successfully confirmed', results: null});
-    // this is where we confirm this stuff
-    // update isActive to  true 
-}
-*/
 
 
 
