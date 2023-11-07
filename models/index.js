@@ -6,6 +6,7 @@ const Store = require('./Store');
 const { Address } = require('./Address');
 const Driver = require('./Driver');
 const Customer = require('./Customer');
+const Admin = require('./Admin');
 
 // Did not load a file had to use require for a customer
 
@@ -20,4 +21,5 @@ module.exports = {
     roles,
     Driver,
     Customer,
+    Admin,
 }
