@@ -16,7 +16,7 @@ const StoreSchema = new Schema({
     },  
     rating: Number, // Decimal128 type
     address: { type: Schema.Types.ObjectId, ref: 'address' },
-    managers: [ {type: Schema.Types.ObjectId, ref: 'users'} ], // user level 1(cto), user lvl.2(manager), etc...
+    employees: [ {type: Schema.Types.ObjectId, ref: 'users'} ], // reference to the employees document
 });
 
 module.exports = mongoose.model('Store', StoreSchema);
