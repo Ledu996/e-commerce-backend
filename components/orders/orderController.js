@@ -1,54 +1,24 @@
 const { 
         Order, 
-        paymentTypes, 
-        deliveryTypes, 
-        Store, 
-        User,
         Driver,
+        Admin,
+        Customer,
 } = require('../../models/index');
-const { dateFormatter } = require('../../lib/misc');
-const jwt = require("jsonwebtoken");
+const { dateFormatter, checkOrderRuleOfFiveMinutes } = require('../../lib/misc');
 
 
 // CUSTOMER 
-
-const getAddressAndShopsForOrder = async (req, res) => {
-    try {
-    const token = req.headers.authorization.split(' ')[1];
-    const verified = await jwt.verify(token, 'secret');
-    console.log(verified)
-    const [ address, stores ] = await Promise.all(
-        [
-         User
-         .findOne({_id: verified._id})
-         .select('address'),
-         Store.find({})
-    ]
-    );
-
-    return res.status(200).json({
-        message: 'Success', 
-        results: {address, stores: [...stores], paymentTypes, deliveryTypes}
-    });
-    
-}   catch (err) {
-    return res.status(400).json({message: 'User has to be logged in', results: null})
-}
-
-};
-
-
 const createOrder = async (req, res) => {
- console.log("Request-user", req.user); 
-try {
-    
-    const { 
+
+    try {
+        const { 
         user_id, 
         orderItems, 
         deliveryType, 
         additionalInformation, 
         store_id, 
         address, 
+        totalAmount, 
     } = req.body;
 
     const timeOfDeliveryCreation = new Date();
@@ -60,7 +30,7 @@ try {
         return res.status(406).json({message: 'Not Acceptable'});
     }
     
-   const order =  await Order.create({
+    await Order.create({
                     date: formattedDate, 
                     products: orderItemsTransformed,                     
                     deliveryType,
@@ -70,33 +40,34 @@ try {
                     address,
                     store: store_id,
                     user: user_id,
+                    totalAmount
     })
     
     // order created, but it needs to be accepted from an admin...
-
      return res.status(201).json({message: 'Success'})
     
     } catch (err) {
-        console.log(err.message);
+        console.log('Err message ', err.message);
         return res.status(500).json({message: 'Something went wrong'});
     }
 } 
 
 
-const getOrdersHistoryByUserId = async (req, res) => {
+const getOrdersHistoryByUserId = async (req, res) => { // customer
     // only can see accepted and rejected orders
-    // in route of the endpoint specify the id 
     const ordersHistory = await Order
         .find({ user: req.user._id })
         .populate({path: 'products.id', model: 'Product'})
-    
-    //})
     
     const data = ordersHistory.map((order) => {
         // wrong destructuring, or what 
         const { products, ...rest } = order;
         // if we added total amount it is not necessary to calculate the total amount
         const o = rest._doc;
+
+        // total amount on a database no need to calculate it
+        // will be calculated on the frontend
+        // and saved inside of a document
         const totalAmount = products.reduce((acc, product) => {
             const { id: { price }, quantity } = product;
             return acc += price * quantity;
@@ -110,32 +81,22 @@ const getOrdersHistoryByUserId = async (req, res) => {
 }
 
 
-// helper function in order to create a new Order
-
-async function checkOrderRuleOfFiveMinutes(orderTime, user) { 
-    
-    const formattedDate = dateFormatter(orderTime); // returns a date formatted
-    const fiveMinutesBefore = new Date (formattedDate.getTime() - 1000 * 60 * 5);
-    
-    const orders = await Order.find(
-        {
-           user,
-           date: { $gte: fiveMinutesBefore, $lt: formattedDate }
-        })
-        
-        return orders.length > 2 ? false : true;
-}
-
-
 // ADMIN 
 
 const listPendingOrders = async (req, res) => {
     // for a certain store, every store has different orders
     // if role is admin check witch store he works in
-    const { store_id } = req.params;
+    const { _id } = req.user;
+    const admin = await Admin.findOne({_id});
     const pendingOrders = await Order
-                .find({status: 'pending', store: store_id})
-                .sort({'date': 'asc'})
+            .find({status: /pending/, store: admin.worksIn})
+            .sort({'date': 'asc'})
+            .select('-store')
+            .populate({
+                path: 'user', 
+                model: 'User', 
+                select: '-address -password'
+            })
     
     return res.json({results: pendingOrders});
 }
@@ -144,24 +105,47 @@ const listPendingOrders = async (req, res) => {
 // driver can change the status of an order
 const acceptAnOrder = async (req, res) => {
     // driver_id in body of request
-    const { order_id, driver_id: driver } = req.body;
-    // this feature should be dynamic (timeOfDelivery)
-    const timeOfDelivery = new Date(Date.now() + 1000 * 60 * 30)
-    const acceptAnOrder = await Order.findOneAndUpdate(
+    // 1) set time of an order
+    // 2) additional message(maybe not)
+    // 3) select a driver for a route and assign him
+    // 4) Accept
+    const { 
+        order_id, 
+        driver_id: driver, 
+        timeOfDelivery, // Date type
+    } = req.body;
+    // do we need to create a separate entity or just update the timeOfDelivery
+    // inside of a Order document
+
+    const acceptedOrder = await Order.findOneAndUpdate(
         { _id: order_id },
-        { timeOfDelivery, status: 'accepted', driver  }
-        // driver can change the status of an order to delivered
+        { 
+            timeOfDelivery, 
+            status: 'accepted', 
+            driver,
+            approved: true, 
+        }
     )
-    console.log(acceptAnOrder);
-    
+    await Customer.findOneAndUpdate(
+        { _id: acceptedOrder.user }, 
+        { $inc: { numberOfPurchases: 1 }}
+    )
+
+    // notify both driver and a customer about an order
+    // increase customer purchase by 1
+    return res.status(200).json({message: 'Successfully accepted order', results: order_id})
 };
+
+// Are drivers working for a specific store
+// or they are working like a separate company(agency) ?
 
 // DRIVER
 
+// put a taught into this
 const getOrdersForDriver = async (req, res) => {
     // get orders for a specific driver 
     try {
-        const orders = await Order.find({driver: req.user._id, status: 'Accepted'});
+        const orders = await Order.find({driver: req.user._id, status: /Accepted/});
         
         if (!orders.length) return res.status(404).json({message: 'Orders not found', results: orders});
         return res.status(200).json({message: 'Orders for driver are found', results: orders})
@@ -173,13 +157,12 @@ const getOrdersForDriver = async (req, res) => {
 
 const changeStatusOfOrder = async (req, res) => {
     try {
+        const { order_id } = req.body;
         await Order.findOneAndUpdate(
-        { _id: orderId },
+        { _id: order_id },
         { status: 'delivered' }
     )
-    // maybe in driver component
-    // see it for later
-        await Driver.findOneAndUpdate({_id: req.user._id}, {$inc: {numberOfSuccessfulDrives: 1}})
+        await Driver.findOneAndUpdate({ _id: req.user._id }, { $inc: { numberOfSuccessfulDrives: 1 }})
         return res.status(200).json({message: 'Successfully updated order status', results: {}})
     } catch (err) {
        return res.status(500).json({message: 'Something went wrong ', results : null})
@@ -188,7 +171,6 @@ const changeStatusOfOrder = async (req, res) => {
 
 
 module.exports = {
-    getAddressAndShopsForOrder,
     createOrder,
     getOrdersHistoryByUserId,
     listPendingOrders,

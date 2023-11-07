@@ -8,17 +8,17 @@ const {
     createOrder, 
     getOrdersHistoryByUserId, 
     listPendingOrders,
-    getAddressAndShopsForOrder,
     acceptAnOrder,
     changeStatusOfOrder,
+    getOrdersForDriver,
 } = require('./orderController');
 
 // maybe in the route path specify the protected in the name
 router
-.get('/user_id', getOrdersHistoryByUserId) // user 
-.get('/get-store-address/', getAddressAndShopsForOrder)
-.get('/pending-list/:store_id', [permissionAccess, roleBasedAccessControl('Admin', 'SuperAdmin')], listPendingOrders) // multiple middlewares
-.post('/create', [permissionAccess, emailVerification, roleBasedAccessControl('User')], createOrder, ) // user
+.get('/history',[permissionAccess, roleBasedAccessControl('Customer')], getOrdersHistoryByUserId) // user 
+.get('/pending-list', [permissionAccess, roleBasedAccessControl('Admin')], listPendingOrders) // multiple middlewares
+.get('/accepted-orders', [permissionAccess, roleBasedAccessControl('Driver')], getOrdersForDriver)
+.post('/create', [permissionAccess, roleBasedAccessControl('Customer')], createOrder, ) // emailVerification
 .patch('/accept', [permissionAccess, roleBasedAccessControl('Admin')], acceptAnOrder) // admin
 .patch('/change-status-order',[ permissionAccess, roleBasedAccessControl('Driver')], changeStatusOfOrder)
 
