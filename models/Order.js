@@ -17,17 +17,7 @@ const OrderSchema = new Schema({
         approved: { type: Boolean, default: false },
         timeOfDelivery: Date, // user will enter 20 m string we will convert everything to date and add 20 minutes above
         totalAmount: Number,
-        address: {
-                street: String,
-                number: String,
-                municipality: String,
-                city: String,
-                geoLocation: {
-                    latitude: String,
-                    longitude: String
-                },
-                apartmentNumber: Number,  
-        }, 
+        address: { type: mongoose.Schema.Types.ObjectId, ref: 'Address' }, 
         typeOfPayment: { type: String, enum: paymentTypes  },
         // saves the id of an address
         user: { type: Schema.Types.ObjectId, ref: 'users' },

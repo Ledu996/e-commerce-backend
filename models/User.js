@@ -29,19 +29,8 @@ const UserSchema = new Schema({
     dateOfBirth: Date,
     gender: { type: String, enum: genders, required: true },
     role: { type: String, enum: roles },
-    address: {
-        street: String,
-        number: String,
-        municipality: String,
-        city: String,
-        state: String,
-        geoLocation: {
-                latitude: String,
-                longitude: String
-            },
-        apartmentNumber: Number,
-    },
-    preferredAddress: { type: Schema.Types.ObjectId, ref: 'address' },
+    addresses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'address' }],
+    defaultAddress: { type: mongoose.Schema.Types.ObjectId, ref: 'address' },  
     verificationToken: String,
     isVerified: { type: Boolean, default: false } 
 }, options);
