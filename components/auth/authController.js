@@ -56,7 +56,7 @@ const login = async (req, res) => {
     const tokens = await getTokens(user);
     const { acc_token: accessToken, refresh_token } = tokens;
     res.cookie('jwt', refresh_token, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000,  });
-    return res.status(200).json({message: '', results: { accessToken, state: user.address.state, role: user.type_of_role }});  
+    return res.status(200).json({message: 'Login successful', results: { accessToken }});  
 };
 
 
@@ -64,7 +64,7 @@ const login = async (req, res) => {
 // - every time we exchange a refresh token, a new refresh token is also generated
   // leveling up the security of our app
 
-// 2) Refresh Token Automatic Reuse Detection
+// 2) Refresh Token Automatic Reuse Detection, will implement in the future
 // unable refresh token family inside of a user document
 // safe to store in a database ? 
 // threat all users as malicious 
@@ -95,7 +95,8 @@ const logout = async (req, res) => {
         return res.status(204).json({message: 'No content', message: null})
     }
     res.clearCookie('jwt', { httpOnly: true, sameSite: 'None', secure: true });
-    return res.status(204).json({message: 'Successfully loged out', message: null})
+    await User.findOneAndUpdate({ _id }, {isActive: false});
+    return res.status(200).json({message: 'Successfully logged out', message: null})
 };
 
 
