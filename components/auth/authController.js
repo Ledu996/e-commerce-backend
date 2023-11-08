@@ -1,18 +1,26 @@
 const { hash, compare } = require('bcrypt');
 const { getTokens, refreshAccessToken } = require('../../lib/jwtHandler');
-const cookie = require('cookie-parser');
 const  jwt = require('jsonwebtoken');
-const { User } = require('../../models/index');
+const { User, Address } = require('../../models/index');
+
 
 
 const register = async (req, res) => {   
+
+    try {
     const { 
-        firstname,
-        lastname,
+        firstname: firstName,
+        lastname: lastName,
         username, 
         password, 
         email, 
-        address, 
+        address: {
+            street,
+            number,
+            municipality,
+            city,
+            apartmentNumber,
+        }, 
         phone, 
         gender,
         dateOfBirth,
@@ -27,15 +35,43 @@ const register = async (req, res) => {
     // validation token for later but it is saved on user document
 
     // maybe later set a condition if you need to fill other fields that are not related for Driver and Customer
+    // create an address first, take the id of an address and save inside user document
+    // or other way around create a user than check for an address
+
+    let [ newUser, existingAddress ] = await Promise.all([
+        User.create({
+            firstName,
+            lastName,
+            username,
+            email,
+            password: hashedPassword,
+            phone,
+            gender,
+            type_of_role: typeOfUser == 'Customer' ? 'Customer' : 'Driver',
+        }),
+
+        Address.findOne({
+            street, 
+            number, // street number
+            apartmentNumber,
+            municipality,
+            city
+        }),
+    ])
+    if(!existingAddress) {
+        existingAddress = new Address({street, number, municipality, city, apartmentNumber})
+    }
+
+    newUser.address = existingAddress._id;
+    existingAddress.users.push(newUser._id);
+    await newUser.save();
+    await existingAddress.save();
     
-    const createdUser = await User.create({
-        ...req.body,
-        password: hashedPassword,
-        type_of_role: typeOfUser == 'Customer' ? 'Customer' : 'Driver',
-    })
-    
-    const access_token = await jwt.sign({_id: createdUser._id, role: createdUser.type_of_role }, 'secret', {expiresIn: '1h'}); // 7d 
-    res.status(200).json({message: "User created successfully", results: {createdUser, access_token}});
+    // has to log in or go to protected routes
+        res.status(200).json({message: "User created successfully", results:  {}});
+    } catch (err) {
+        res.status(500).json({message: err.message, results: null});
+    }
 }
 
 const login = async (req, res) => {
