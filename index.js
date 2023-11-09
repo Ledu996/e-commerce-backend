@@ -6,8 +6,9 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 require('dotenv').config(); 
 const { connectionString } = require('./config/database/connection');
-const { refreshAccessToken } = require('./lib/jwtHandler');
 const authRouter = require('./components/auth/authRouter');
+const addressRouter = require('./components/address/addressRouter');
+const storeRouter = require('./components/store/storeRouter');
 const orderRouter = require('./components/orders/orderRouter');
 const productRouter = require('./components/products/productRouter');
 const driverRouter = require('./components/driver/driverRouter');
@@ -50,10 +51,12 @@ app.use(async (req, res, next) => {
   const isWhiteListed = paths.some(e => e.test(originalUrl)); 
   console.log('Is whiteListed ', isWhiteListed);
   if (!isWhiteListed) {
+    console.log('Protected route');
     const token = req.headers.authorization.split(' ')[1];
     const verified = await jwt.verify(token, 'acc_secret');
     console.log('Access token ', verified);
-    req.user = { _id: verified._id }
+    req.user = { _id: verified._id };
+    console.log('Going into the chain');
     next()
   } else {
     console.log('Not among protected routes');
@@ -62,6 +65,7 @@ app.use(async (req, res, next) => {
 } catch (err) {
   // just return a response not authorized
   // on client will than hit an endpoint to refresh a token
+  console.log(err.message);
   return res.status(401).json({message: 'Token needs to be refreshed', result: {}})
   
 } 
@@ -71,6 +75,8 @@ app.use(async (req, res, next) => {
 // Application Routes
 
 app.use('/auth', authRouter);
+app.use('address', addressRouter);
+app.use('/store', storeRouter);
 app.use('/orders', orderRouter);
 app.use('/products', productRouter);
 app.use('/drivers', driverRouter);
