@@ -1,7 +1,7 @@
 const { Product } = require('../../models/index');
 
 // also an image will be uploaded for a product, but not mandatory
-const createProduct =  async (req, res) => {};
+const createProduct =  async (req, res) => {}; // admin
 
 
 const getAllProducts = async (req, res) => {
@@ -15,6 +15,29 @@ const getAllProducts = async (req, res) => {
     return res.status(200).json({message: 'Products successfully fetched', results: {products, totalNumberOfProducts, categories }});
 }
 
+const getProductById = async (req, res) => {
+    try {
+        const product = await Product.findOne({_id: req.params.id});
+        if (!product) return res.status(404).json({message: 'Product not found', results: {}})
+    } catch (err) {
+        return res.status(500).json({message: err.message, results: null });
+    }
+};
+
+const updateProduct = async (req, res) => {
+    try {
+        const {
+            _id,
+            ...rest
+        } = req.body;
+
+        await Product.findByIdAndUpdate({ _id }, { ...rest });
+        res.status(200).json({message: 'Product updated successfully', results: {}})
+    } catch (err) {
+        res.status(500).json({message: err.message, results: null});
+    }
+};
+
 const getTopSoldProducts = async (req, res) => {
 
     const products = await Product
@@ -26,8 +49,7 @@ const getTopSoldProducts = async (req, res) => {
 }
 
 
-const calculateSeelingStatistics = async (req, res) => {
-    console.log('Getting statistics');
+const calculateSellingStatistics = async (req, res) => {
 
     const products = await Product.aggregate([
         {
@@ -47,10 +69,11 @@ const calculateSeelingStatistics = async (req, res) => {
 
 
 
-
-
 module.exports = {
     getAllProducts,
+    getProductById,
+    updateProduct,
     getTopSoldProducts,
-    calculateSeelingStatistics
+    calculateSellingStatistics,
+    createProduct
 }
